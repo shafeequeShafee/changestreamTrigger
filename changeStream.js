@@ -6,7 +6,7 @@ async function main() {
      * Connection URI. Update <username>, <password>, and <your-cluster-url> to reflect your cluster.
      * See https://docs.mongodb.com/drivers/node/ for more details
      */
-    const uri ="mongodb+srv://root:root@myfirstcluster.2ludm.mongodb.net/company?retryWrites=true&w=majority";
+    const uri = "mongodb+srv://root:root@myfirstcluster.2ludm.mongodb.net/company?retryWrites=true&w=majority";
 
     /**
      * The Mongo Client you will use to interact with your database
@@ -43,6 +43,7 @@ async function main() {
 
         // OPTION ONE: Monitor new listings using EventEmitter's on() function.
         // await monitorListingsUsingEventEmitter(client, 30000, pipeline);
+        await monitorListingsUsingEventEmitter(client, 200000);
 
         // OPTION TWO: Monitor new listings using ChangeStream's hasNext() function
         // await monitorListingsUsingHasNext(client, 30000, pipeline);
@@ -90,7 +91,32 @@ async function monitorListingsUsingEventEmitter(client, timeInMs = 60000, pipeli
     // We can use EventEmitter's on() to add a listener function that will be called whenever a change occurs in the change stream.
     // See https://nodejs.org/dist/latest-v12.x/docs/api/events.html#events_emitter_on_eventname_listener for the on() docs.
     changeStream.on('change', (next) => {
-        console.log(next);
+        const collection =  client.db("documentDataBase").collection("DocumentStream");
+        if (next.operationType === "insert") {
+            const myobjDocu = next.fullDocument;
+            collection.insertOne(myobjDocu, function (err, res) {
+                if (err) throw err;
+                console.log("1 document inserted suceesfully");
+                db.close();
+            });
+
+        }
+
+        else if (next.operationType  === "delete") {
+            var myobj = { msg: "deleted" };
+            const doc = collection.insertOne(myobj, function (err, res) {
+                if (err) throw err;
+                console.log("1 document inserted suceesfully");
+                db.close();
+            });
+
+        }
+        else {
+            console.log("hiiii")
+        }
+
+
+        // console.log(next);
     });
 
     // Wait the given amount of time and then close the change stream
